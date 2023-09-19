@@ -2,11 +2,15 @@ package rabbitconnect
 
 import (
 	"fyne.io/fyne/v2"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type Connection struct {
-	URL  string
-	Name string
+	URL    string
+	Name   string
+	conn   *amqp.Connection
+	chanel *amqp.Channel
+	queue  amqp.Queue
 }
 
 func (d *Connection) MinSize(objects []fyne.CanvasObject) fyne.Size {
@@ -36,4 +40,36 @@ func (c *Connection) Layout(objects []fyne.CanvasObject, containerSize fyne.Size
 
 func NewConnection() *Connection {
 	return &Connection{}
+}
+
+func (c *Connection) Clear() {
+
+}
+
+func (c *Connection) ConnectServe() (err error) {
+	/// коннектимся к серверу
+	c.conn, err = amqp.Dial(c.Name)
+	if err != nil {
+		return
+	}
+
+	// Конект к каналу (wtf)
+	c.chanel, err = c.conn.Channel()
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (c *Connection) SetQueue() {
+	if c.chanel != nil {
+		c.queue, _ = c.chanel.QueueDeclare(
+			c.Name, // name
+			false,  // durable
+			false,  // delete when unused
+			false,  // exclusive
+			false,  // no-wait
+			nil,    // arguments
+		)
+	}
 }
